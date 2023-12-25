@@ -24,9 +24,10 @@ func (p *processor) init() {
 		p.loader = func(url string) (io.Reader, error) {
 			resp, err := http.Get(url)
 			if err != nil {
+				log.Printf("Failed to GET %s\n", url)
 				return nil, err
 			}
-			defer resp.Body.Close()
+			//defer resp.Body.Close()
 			return resp.Body, nil
 		}
 	}
