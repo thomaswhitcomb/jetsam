@@ -1,1 +1,5 @@
-# jitsam
+# jetsam
+
+## Build
+
+    make
