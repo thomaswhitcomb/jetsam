@@ -7,12 +7,12 @@ type Pipeline struct {
 	processor      []processor
 	ProcessorCount int
 	reducer        reducer
-	work           chan string
-	items          chan string
+	sourceBacklog  chan string
+	sourceLines    chan string
 	processorDone  chan DoneChanMsg
 	reducerDone    chan DoneChanMsg
 	Sources        []string
-	ItemDepth      int
+	BufferSize     int
 	Loader         Loader
 	Reducer        ReducerFunc
 }
@@ -20,15 +20,15 @@ type Pipeline struct {
 func (ppl *Pipeline) Provision() {
 	ppl.processor = []processor{}
 
-	ppl.items = make(chan string, ppl.ItemDepth)
+	ppl.sourceLines = make(chan string, ppl.BufferSize)
 	ppl.processorDone = make(chan DoneChanMsg, len(ppl.Sources))
-	ppl.work = make(chan string, len(ppl.Sources))
+	ppl.sourceBacklog = make(chan string, len(ppl.Sources))
 	ppl.reducerDone = make(chan DoneChanMsg, 1)
 
 	for i := 0; i < ppl.ProcessorCount; i++ {
 		p := processor{
-			in:     ppl.work,
-			out:    ppl.items,
+			in:     ppl.sourceBacklog,
+			out:    ppl.sourceLines,
 			done:   ppl.processorDone,
 			loader: ppl.Loader,
 		}
@@ -36,10 +36,10 @@ func (ppl *Pipeline) Provision() {
 	}
 	ppl.eventer = eventer{
 		sources: ppl.Sources,
-		out:     ppl.work,
+		out:     ppl.sourceBacklog,
 	}
 	ppl.reducer = reducer{
-		in:   ppl.items,
+		in:   ppl.sourceLines,
 		done: ppl.reducerDone,
 		fn:   ppl.Reducer,
 	}
@@ -56,8 +56,8 @@ func (ppl *Pipeline) Run() {
 		msg := <-ppl.processorDone
 		totalLoaded = totalLoaded + msg.Count
 	}
-	close(ppl.items)
-	log.Printf("%d items loaded\n", totalLoaded)
+	close(ppl.sourceLines)
+	log.Printf("%d sourceLines loaded\n", totalLoaded)
 	msg := <-ppl.reducerDone
 	log.Printf("%d Items reduced\n", msg.Count)
 	log.Printf("%s\n", msg.Text)
