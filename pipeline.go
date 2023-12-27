@@ -54,11 +54,11 @@ func (ppl *Pipeline) Run() {
 	totalLoaded := 0
 	for i := 0; i < len(ppl.processor); i++ {
 		msg := <-ppl.processorDone
-		totalLoaded = totalLoaded + msg.Count
+		totalLoaded = totalLoaded + msg.NumberProcessed
 	}
 	close(ppl.sourceLines)
 	log.Printf("%d sourceLines loaded\n", totalLoaded)
 	msg := <-ppl.reducerDone
-	log.Printf("%d Items reduced\n", msg.Count)
-	log.Printf("%s\n", msg.Text)
+	log.Printf("%d Items reduced\n", msg.NumberProcessed)
+	log.Printf("%v\n", msg.Results)
 }
