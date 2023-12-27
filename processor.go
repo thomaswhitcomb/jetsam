@@ -14,10 +14,11 @@ type DoneChanMsg struct {
 	NumberProcessed int
 }
 type processor struct {
-	in     <-chan string
-	out    chan<- string
-	done   chan<- DoneChanMsg
+	in     chan string
+	out    chan string
+	done   chan DoneChanMsg
 	loader Loader
+	closer io.ReadCloser
 }
 
 func (p *processor) init() {
@@ -28,7 +29,7 @@ func (p *processor) init() {
 				log.Printf("Failed to GET %s\n", url)
 				return nil, err
 			}
-			//defer resp.Body.Close()
+			p.closer = resp.Body
 			return resp.Body, nil
 		}
 	}
@@ -36,7 +37,7 @@ func (p *processor) init() {
 
 func (p *processor) run() {
 	log.Printf("Processor starting\n")
-	itemsLoaded := 0
+	linesLoaded := 0
 	p.init()
 	for {
 		url, ok := <-p.in
@@ -49,16 +50,17 @@ func (p *processor) run() {
 			log.Printf("Failed to GET url: %s err: %v\n", url, err)
 			continue
 		}
+		defer p.closer.Close()
 		scanner := bufio.NewScanner(ldr)
-		scanner.Scan()
+		scanner.Scan() // skip csv header
 		for scanner.Scan() {
 			p.out <- scanner.Text()
-			itemsLoaded++
+			linesLoaded++
 		}
 	}
-	log.Printf("Processor terminating. Items loaded: %d\n", itemsLoaded)
+	log.Printf("Processor terminating. Lines loaded: %d\n", linesLoaded)
 	p.done <- DoneChanMsg{
 		Results:         DoneParms{},
-		NumberProcessed: itemsLoaded,
+		NumberProcessed: linesLoaded,
 	}
 }
