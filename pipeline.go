@@ -3,7 +3,7 @@ package jetsam
 import "log"
 
 type Pipeline struct {
-	eventer        eventer
+	eventor        eventor
 	processor      []processor
 	ProcessorCount int
 	reducer        reducer
@@ -34,7 +34,7 @@ func (ppl *Pipeline) Provision() {
 		}
 		ppl.processor = append(ppl.processor, p)
 	}
-	ppl.eventer = eventer{
+	ppl.eventor = eventor{
 		sources: ppl.Sources,
 		out:     ppl.sourceBacklog,
 	}
@@ -46,7 +46,7 @@ func (ppl *Pipeline) Provision() {
 }
 func (ppl *Pipeline) Run() {
 	go ppl.reducer.run()
-	ppl.eventer.run()
+	ppl.eventor.run()
 	for _, task := range ppl.processor {
 		task := task
 		go task.run()
