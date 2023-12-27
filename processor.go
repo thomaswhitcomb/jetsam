@@ -8,9 +8,10 @@ import (
 )
 
 type Loader func(url string) (io.Reader, error)
+type DoneParms map[string]string
 type DoneChanMsg struct {
-	Text  string
-	Count int
+	Results         DoneParms
+	NumberProcessed int
 }
 type processor struct {
 	in     <-chan string
@@ -56,5 +57,8 @@ func (p *processor) run() {
 		}
 	}
 	log.Printf("Processor terminating. Items loaded: %d\n", itemsLoaded)
-	p.done <- DoneChanMsg{Text: "done", Count: itemsLoaded}
+	p.done <- DoneChanMsg{
+		Results:         DoneParms{},
+		NumberProcessed: itemsLoaded,
+	}
 }
