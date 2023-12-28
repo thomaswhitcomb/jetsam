@@ -44,7 +44,7 @@ func (ppl *Pipeline) Provision() {
 		fn:   ppl.Reducer,
 	}
 }
-func (ppl *Pipeline) Run() {
+func (ppl *Pipeline) Run() DoneChanMsg {
 	go ppl.reducer.run()
 	ppl.eventor.run()
 	for _, task := range ppl.processor {
@@ -59,6 +59,6 @@ func (ppl *Pipeline) Run() {
 	close(ppl.sourceLines)
 	log.Printf("%d sourceLines loaded\n", totalLoaded)
 	msg := <-ppl.reducerDone
-	log.Printf("%d Items reduced\n", msg.NumberProcessed)
-	log.Printf("%v\n", msg.Results)
+	log.Printf("%d Lines reduced\n", msg.NumberProcessed)
+	return msg
 }
