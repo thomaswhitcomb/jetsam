@@ -57,7 +57,7 @@ func (ppl *Pipeline) Run() DoneChanMsg {
 		totalLoaded = totalLoaded + msg.NumberProcessed
 	}
 	close(ppl.sourceLines)
-	log.Printf("%d sourceLines loaded\n", totalLoaded)
+	log.Printf("%d Source lines loaded\n", totalLoaded)
 	msg := <-ppl.reducerDone
 	log.Printf("%d Lines reduced\n", msg.NumberProcessed)
 	return msg
